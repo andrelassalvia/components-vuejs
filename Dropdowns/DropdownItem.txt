@@ -1,0 +1,46 @@
+ESTRUTURA DO COMPONENTE
+	- Uma unica estrutura dentro do template chamando <slot> 
+
+TORNAR COMPONENTE DINAMICO - PODE SER <a>, <li>, <button> etc
+	- trocar <div> por <component>
+	- trabalharemos com duas possibilidades: href e um atributo proprio do HTML chamado is
+		- O href vira como props do pai pois deve passar um link
+		- o is sera uma propriedade computed. Ou seja, ela é uma propriedade que possui um metodo integrado à ela mesma.
+		- a logica é o is verificar se existe algum href definido. Se nao houver, retornar <li> que é o padrao que queremos
+		
+		computed: {
+        is() {
+            if (this.href !== undefined) {
+                return "a";
+            }
+
+            return "li";
+        },
+    },
+	
+PERMITIR QUE UM EVENTO DE CLICK SEJA CAPTURADO FORA DO COMPONENTE
+	- emitir um evento @click e chamar uma funcao onClick
+	- em methods criar a funcao onClick emitindo o evento
+		
+		 onClick(evt) {
+            this.$emit("click", evt);  
+			closeDropdown();
+
+FECHAR O DROPDOWN AO CLICAR EM UM ITEM
+	- em methods vamos criar um metodo chamado closeDropdown() e chamar este metodo apos o click (ver acima)
+	- como no dropdownItem nao temos acesso ao isOpen, precisamos criar um provide no component dropdownItem para liberar funcionalidades para todos os seus filhos
+		
+		provide() {
+			return {
+				dropdown: this,  // this para passar o componente todo. Poderiamos passar somente this.isOpen por exemplo
+		},
+		
+	- e no dropdownItem injetamos esta funcionalidade utilizando inject.
+	
+		inject: ["dropdown"],
+		
+	- Agora podemos chamar a funcao close que pertence ao dropdown pai
+	
+		closeDropdown() {
+            this.dropdown.close();
+        }

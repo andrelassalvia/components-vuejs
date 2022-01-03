@@ -1,0 +1,58 @@
+ESTRUTURA DO COMPONENTE
+	- dividido em 2 partes
+		- acima button com icone svg
+		- abaixo div com slot para insrir itens
+		
+MOSTRAR ESCONDER ITENS
+	- v-show na div que carrega o slot de itens. isOpen -> variavel recebe valor inicial false
+	- no button inserir 'click' passando funcao toggle()
+	- toggle() nega o isOpen anterior ->             this.isOpen = !this.isOpen;
+	
+MOSTRAR TEXTO NO TITULO DO DROPDOWN
+	- Receber props text e passar no corpo de button
+	
+FECHAR O DROPDOWN
+	- criar um funcao close() passando isOpen para false
+	
+FECHAR DROPDOWN CLICANDO FORA DELE
+	- fazer um mounted() para escutar todos os eventos de 'click' fora do proprio dropdown
+	- no mesmo momento que fazemos o mounted(), ja fazemos um beforeDestroy() para remover a escuta dos eventos do mounted()
+		- serve para que o programa nao fique escutando todos os clicks o tempo inteiro
+	- o mounted() escuta os clicks e chama uma funcao clickOutListener
+	- A funcao clickOutListener espera evt como parametro e verifica se o $el (element) contem o evt como alvo
+	- Se o proprio $el nao for o alvo, chama a funcao close()
+	
+		- if (!this.$el.contains(evt.target)) {
+                this.close();
+            }
+			
+FECHAR O DROPDOWN CLICANDO EM OUTRO DROPDOWN
+	- utilizar o conceito de evetBus
+	- criar watch para escutar alteracoes em isOpen ->  isOpen(value) {
+	- a funcao passada no watch vai fazer algo quando o isOpen for verdadeiro ->  if (value) {
+	- a funcao vai utilizar a raiz do vue para emitir um evento. Chamamos o evento de dropdown::open e passamos todo o componente com this,
+	- portanto, toda vez que isOpen virar para true a funcao emite um evento passando todo o componente atual.
+	
+		 this.$root.$emit("dropdown::open", this);
+		 
+	- capturamos o evento dropdown::open em um created()utilizando $on para escutar o evento
+	- como foi $root que emitiu o evento temos que passa-lo antes de $on
+	- passamos dropdown::open (evento) e uma funcao toda vez que este evento for "escutado" 
+		
+		 created() {
+        this.$root.$on("dropdown::open", this.rootCloseListener);
+    },
+	
+	- A funcao rootCloseListener será criada em methods e recebe como parametro o proprio componente (que foi passado como parametro no momento que o watch criou dropdown::open (this))
+	- agora basta verificar se o parametro que a rootCloseListener esta recebendo é o mesmo que this. Se nao for, chama close().
+		
+		rootCloseListener(vm) {
+            if (vm !== this) {
+                this.close();
+            }
+        },
+	
+	
+	
+	
+		

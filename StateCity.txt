@@ -1,0 +1,50 @@
+ESTRUTURA DO COMPONENTE
+	- <dropdown>
+		<dropdownItem></dropdownItem>
+	</dropdown>
+
+CARREGANDO ESTADOS NO DROPDOWNITEM
+	- criar variavel states:[] em data() para receber array de estados
+	- criar methodo getStates() para carregar estados
+		- methodo usa axios, busca via get no BD utilizando a route, pega este retorno e o atribui a variavel states. Todos os estados serao carregados la dentro
+		
+		getStates() {
+            axios.get(this.urlBaseState).then((response) => {
+                this.states = response.data;
+            });
+        },
+		
+	- created() chamando a funcao getStates() para chamar todos os estados assim que o componente é carregado
+	
+	- no dropdownItem:
+		- fazer um v-for passando state in states e :key="state.id" para carregar todos os estados ali
+		- {{state.name}} no corpo do dropdownItem para listar na tela
+
+
+SELECIONANDO UM ESTADO AO CLICAR
+	- @click no dropdownItem passando funcao selectState(state)
+	- o parametro chamara o proprio estado selecionado
+	- criar uma variavel stateSelected para receber o estado selecionado
+	- a funcao selectState(state) retorna à variavel stateSelected o valor de state.
+	- fazer um bind em :text do dropdown passando ou o stateSelected.name ou um valor padrao
+	
+CARREGAR LISTA DE CIDADES AO ESCOLHER ESTADO
+	- criar um methodo getCities chamando a mesma estrutura de getStates
+	- a url passada deve conter a estrutura necessaria para encontrar o state_id dentro BD de cidades
+	- getCities deve ser chamada apos o estado ter sido selecionado, dessa forma o carregamento do array cities acontece somente apos isso.
+	
+PREDEFINIR UM ESTADO NO DROPDOWN
+	- incluir um return no metodo getStates
+	- criar uma props para receber do componente pai o nome do estado que sera carregado
+	- dentro de um created() passar o getStates encadeando a verificacao se o pai enviou a props e definindo como estado selecionado o mesmo valor da props enviada pelo pai.
+	
+		created() {
+			this.getStates().then(() => {
+				if (this.stateName) {
+					this.stateSelected = this.states.find(
+						(state) => state.name === this.stateName
+					);
+					this.getCities();
+				}
+			});
+		},
