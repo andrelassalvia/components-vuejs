@@ -1,0 +1,168 @@
+CONFIGURAR APLICACAO
+npm install -g @vue/cli
+vue create nome_do_projeto
+A versao vuejs aqui é a 3
+passar terminal para a pasta do projeto
+npm run serve
+imagens devem ficar em assets
+esta estrutura tera 2 components: carrousel carregando serie de slides
+
+
+ESTRUTURA INICIAL DO CAROUSEL
+- Criar 2 componentes: Carousel e Slide
+	- Carousel-> class=carousel e <slot>
+	- Slide-> class=slide e <transition> para criar animations + slot
+- Criar componente que recebera o carousel. Neste caso home
+- Importar ao component pai (home no caso) os 2 components	
+	- import Carousel from ...
+	- import Slide from ...
+	- Declarar components dentro do export default
+	- components: {Carousel, Slide}
+- Formar a estrutura basica do Home
+		<div class=home>
+			<Carousel>
+				<Slide></Slide>
+			</Carousel>
+		</div>
+
+ALOCAR AS IMAGENS DENTRO DO COMPONENT	
+- O style pode ser criado dentro do proprio component. Usar lang=scss para utilizar sass
+- setup() possibilita repetir partes repetidas de um component. Executado antes da instancia do component.
+- Vamos utilizar um v-for para percorrer as imagens. O array com as imagens fica dentro de setup como const=carouselSlides=[]
+- Para utilizarmos as constantes dentro do template temos que passa-las como return do setup()
+- Fazemos o v-for dentro de home no <slide> 
+	- criamos <div> com <img> dentro
+	- o source de img sera :src=require(`./path_para_imagens ${slide}.jpg`) -> interpolacao da rota com o resultado do v-for + .jpg
+- formatar as imagens para aparecerem uma por vez e nao todas uma embaixo da outra. O css esta em:
+	- .slide-info{}
+	- img{}
+
+
+UTILIZAR SOMENTE A IMAGEM INDEXADA PELO V-FOR NO HOME COMPONENT
+- Agora todas as imagens estao sobrepostas. Para acertar isso queremos que seja renderizada somente a imagem associada ao index do v-for
+	- dentro do component carousel criamos o metodo setup()
+	- dentro de setup() criamos uma const currentSlide = ref(1)
+		- utilizaremos um ref() dentro da constante para que seja possivel atualiza-la
+		- precisamos importar ref para poder utiliza-lo no componente
+			- import {ref} from 'vue';
+	- para utilizar constantes criadas dentro de setup() precisamos efetuar return delas
+	- precisamos que currentSlide esteja disponivel dentro de Home component
+		- dentro de carousel component fazmos um bind no slot	
+			<slot :currentSlide="currentSlide" />
+		- dentro de home component passamos um v-slot no <Carousel
+			v-slot="{ currentSlide }
+		- e dentro de home component fazemos um v-show no <slide
+			v-show="currentSlide === index + 1
+			- com isso a img que sera mostrada quando o valor de index+1 for igual ao currentSlide (ate o momento este valor é 1)
+			
+		
+CRIANDO BOTOES PARA ALTERAR O VALOR DE CURRENTSLIDE E MUDAR A IMG NA TELA
+- dentro do component carousel inserir as divs com os icones dos botoes de navegacao
+	- uma class para left outra para right
+- Style dentro do component para faze-los aparecer e posiciona-los
+	.navigate{}
+	.toggle-page{}
+	.right{}
+	.icon{}
+- criar a funcao que dara vida aos botoes
+	- uma funcao para ir forward
+	- outra funcao para preview
+	- precisamos criar uma constante para saber o tamanho total do array de slides
+		- necessario para que as funcoes saibam para onde ir apos percorrer todo o array de um lado e de outro
+		const getSlideCount = ref(null);
+			- precisamos passar null em ref() pois o setup() gira antes do component ser instanciado e nao sabe quantos slides existe
+	- para que o setup() possa contar quantos slides existe assim que o component for instanciado, precisamos importar onMounted()
+		- import {ref, onMounted} from 'vue';
+	- onMounted sera passado dentro de setup()
+	- passara uma arrow function para descobrir quantos slides foram construidos no documento e salvar este numero em getSlideCount
+		 getSlideCount.value = document.querySelectorAll(".slide").length;
+			- o '.slide' é o nome da classe que demos para o local onde os slides seriam construidos
+	
+	- Funcao para proximo slide sera uma arrow function
+		- verifica se o numero do slide atual - currentSlide.value - for igual ao tamanho total - getSlideCount.value - 
+			- caso positivo volta para o primeiro (return,)
+			- caso negativo incrementa seu valor em 1
+			- chamar esta arrow function no return de setup()
+			
+	- Funcao para slide anterior
+		- mesma logica mas no if se nao houver slide anterior permanece no primeiro.
+	
+- chamar as funcoes via @click em cada respectivo botao
+
+
+PAGINATION - IFORMAR QUANTOS SLIDES POSSUI O CAROUSEL
+- dentro do component carousel inserir as divs com os spans para chamarmos a paginacao	
+- dentro do span fazer um v-for em getSlideCount
+	- isso criara o mesmo numero de spans que o total de slides
+	- criar class dentro do span para identificar qual span estara ativo indicando a pagina atual
+	- Style para criar os circulos indicando a paginacao
+		.pagination{}
+		span
+		.active{}
+	
+- funcao para alterar paginacao conforme item clicado
+	- dentro do carousel component, em setup() criar a arrow function goToSlide
+	- passar como parametro (index)
+		- este index esta vindo do v-for que fizemos para criar os spans de paginacao
+	- a funcao deve estabelecer o valor de currentSlide.value = index + 1
+	- retornar a arrow no return de setup()
+	- @click="goToSlide" no span
+
+
+AUTOPLAY DO CAROUSEL
+- dentro do setup() de carousel:
+	- definir se a condicao de autoplay sera verdadeira ou nao	
+		- criar constante autoPlayEnabled = ref(true) - pode ser alterada posteriormente - 
+	- definir apos quanto tempo o carousel gira	
+		- criar constante timeOutDuration = ref(5000)
+		
+	- criar a funcao autoplay
+		const autoplay = () => {
+			setInterval(() => {
+				nextSlide();
+			}, timeoutDuration.value);
+		};
+	- passar uma condicao dentro do setup() indicando que o autoplay somente sera ativado caso autoPlayEnabled.value === true
+
+
+FAZER UMA TRANSICAO SUAVE DE UM SLIDE PARA OUTRO
+- no component slide utilizar a tag <transition
+- dentro do style chamar as classes de transicao
+	.slide-enter-active,
+	.slide-leave-active
+	
+	.slide-enter-from,
+	.slide-leave-to
+	
+	.slide-enter-to,
+	.slide-leave-from
+
+
+HABILITANDO E DESABILITANDO NAVIGATION, PAGINATION E AUTOPLAY
+- dentro de home, criar as binds :navigation, :pagination, :autoplay e :timeOutDuration
+- elas serao passadas como props para o component carousel com o valor de true ou false
+- dentro do carousel component 
+	- passar as props["startAutoPlay", "timeout", "navigation", "pagination"]
+	- passar props como parametro de setup(props)
+	- criar as constantes que retornam a condicao de true or false para cada props
+		const autoPlayEnabled = ref(
+			props.startAutoPlay === undefined ? true : props.startAutoPlay
+		);
+		const timeoutDuration = ref(
+			props.timeout === undefined ? 5000 : props.timeout
+		);
+		const paginationEnabled = ref(
+			props.pagination === undefined ? true : props.pagination
+		);
+		const navigationEnabled = ref(
+			props.navigation === undefined ? true : props.navigation
+		);
+	
+	- passar um v-if para cada um em seu respectivo local:
+		- <div de pagination para pagination
+		- <div de navigation para navigation
+		- dentro do ref para autoPlayEnabled e timeOutDuration
+
+
+  
+
